@@ -1,5 +1,5 @@
 streamlit
 requests
 beautifulsoup4
-openai
+google-genai
 pandas
