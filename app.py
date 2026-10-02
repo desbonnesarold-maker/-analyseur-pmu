@@ -5,16 +5,13 @@ from bs4 import BeautifulSoup
 from google import genai
 import pandas as pd
 
-# Configuration de la page
 st.set_page_config(page_title="IA Analyseur PMU - Geny Courses", layout="wide")
 st.title("🏇 Analyseur Hippique Universel & Pronostic 5/5 (Version Gratuite)")
 st.write("Collez le lien de n'importe quelle course Geny Courses pour obtenir l'analyse gratuite de l'IA.")
 
-# Clé API Google Gemini (Sécurisée et Gratuite)
 api_key = st.sidebar.text_input("Entrez votre clé API Google Gemini (Gratuite)", type="password")
 st.sidebar.markdown("[Obtenir une clé API Gemini gratuite ici](https://google.com)")
 
-# Saisie de l'URL par l'utilisateur
 url_course = st.text_input("Lien de la course Geny Courses :", placeholder="https://geny.com...")
 
 def extraire_donnees_geny(url):
@@ -26,7 +23,6 @@ def extraire_donnees_geny(url):
         
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # 1. Extraction des conditions de la course
         infos_course = ""
         comm_section = soup.find('div', class_='comm_course')
         if comm_section:
@@ -35,7 +31,6 @@ def extraire_donnees_geny(url):
             header_course = soup.find('h1')
             if header_course: infos_course = header_course.text
             
-        # 2. Extraction du tableau des partants
         tableau = soup.find('table', class_='table-partants') or soup.find('table')
         if not tableau:
             return None, "Aucun tableau de partants trouvé sur cette page."
@@ -63,7 +58,6 @@ if st.button("🚀 Analyser la course") and url_course:
             st.error(erreur)
         else:
             st.success("Données récupérées avec succès !")
-            
             st.subheader("📊 Données brutes de la course")
             st.write(f"**Conditions de course détectées :** {donnees['conditions']}")
             
@@ -76,19 +70,19 @@ if st.button("🚀 Analyser la course") and url_course:
             CONDITIONS DE LA COURSE :
             {donnees['conditions']}
             
-            TABLEAU DES PARTANTS (Colonnes brutes : N°, Cheval, Jockey, Entraîneur, Musique, Cotes/Poids selon la course) :
+            TABLEAU DES PARTANTS :
             {df.to_string()}
             
             INSTRUCTIONS SPECIFIQUES D'ANALYSE :
-            1. Analyse la musique de chaque cheval (les performances récentes, les disciplines attelé/monté/obstacle, les disqualifications 'Dai').
-            2. Évalue la qualité des couples Jockey/Entraîneur si l'information est marquante.
-            3. Prends en compte les conditions de la course (distance, allocation, âge) face aux profils.
-            4. Détecte les favoris logiques et repère 1 ou 2 outsiders spéculatifs (les "tocs") pour maximiser les gains du 5/5.
+            1. Analyse la musique de chaque cheval (performances récentes, disciplines, disqualifications).
+            2. Évalue la qualité des couples Jockey/Entraîneur.
+            3. Prends en compte la distance et l'allocation face aux profils.
+            4. Détecte les favoris logiques et repère 1 ou 2 outsiders spéculatifs pour le 5/5.
             
             FORMAT DE RÉPONSE ATTENDU :
-            - ** Synthèse de la course ** (En 2 phrases : profil de la course, pièges à éviter).
-            - ** Le Pronostic 5/5 (Incontournables au moins probables) ** : Liste claire des 5 numéros sélectionnés + 2 chevaux de complément.
-            - ** L'analyse rapide par cheval sélectionné ** : Pourquoi ce cheval fait partie des 5.
+            - ** Synthèse de la course ** (En 2 sentences).
+            - ** Le Pronostic 5/5 ** : Liste des 5 numéros sélectionnés + 2 chevaux de complément.
+            - ** L'analyse rapide par cheval sélectionné **.
             - ** Indice de confiance ** : Note sur 10.
             """
             
@@ -99,9 +93,7 @@ if st.button("🚀 Analyser la course") and url_course:
                         model='gemini-2.5-flash',
                         contents=prompt_analyse,
                     )
-                    
                     st.subheader("🔮 Analyse de l'IA & Sélection 5/5")
                     st.markdown(response.text)
-                    
                 except Exception as e:
                     st.error(f"Erreur avec l'API Google Gemini : {str(e)}")
