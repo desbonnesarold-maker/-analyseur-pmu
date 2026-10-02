@@ -2,16 +2,17 @@ python
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-import openai
+from google import genai
 import pandas as pd
 
 # Configuration de la page
 st.set_page_config(page_title="IA Analyseur PMU - Geny Courses", layout="wide")
-st.title("🏇 Analyseur Hippique Universel & Pronostic 5/5")
-st.write("Collez le lien de n'importe quelle course Geny Courses pour extraire les données et obtenir l'analyse de l'IA.")
+st.title("🏇 Analyseur Hippique Universel & Pronostic 5/5 (Version Gratuite)")
+st.write("Collez le lien de n'importe quelle course Geny Courses pour obtenir l'analyse gratuite de l'IA.")
 
-# Clé API OpenAI (Sécurisée via l'interface)
-api_key = st.sidebar.text_input("Entrez votre clé API OpenAI (GPT-4o)", type="password")
+# Clé API Google Gemini (Sécurisée et Gratuite)
+api_key = st.sidebar.text_input("Entrez votre clé API Google Gemini (Gratuite)", type="password")
+st.sidebar.markdown("[Obtenir une clé API Gemini gratuite ici](https://google.com)")
 
 # Saisie de l'URL par l'utilisateur
 url_course = st.text_input("Lien de la course Geny Courses :", placeholder="https://geny.com...")
@@ -42,7 +43,7 @@ def extraire_donnees_geny(url):
         lignes = tableau.find_all('tr')
         liste_partants = []
         
-        for ligne in lignes[1:]: # On saute l'en-tête
+        for ligne in lignes[1:]:
             colonnes = [td.get_text(strip=True) for td in ligne.find_all(['td', 'th'])]
             if len(colonnes) >= 5:
                 liste_partants.append(colonnes)
@@ -53,7 +54,7 @@ def extraire_donnees_geny(url):
 
 if st.button("🚀 Analyser la course") and url_course:
     if not api_key:
-        st.error("Veuillez entrer votre clé API OpenAI dans la barre latérale pour activer le cerveau de l'IA.")
+        st.error("Veuillez entrer votre clé API Google Gemini dans la barre latérale pour activer l'IA gratuite.")
     else:
         with st.spinner("Extraction de toutes les données de Geny Courses en cours..."):
             donnees, erreur = extraire_donnees_geny(url_course)
@@ -63,14 +64,12 @@ if st.button("🚀 Analyser la course") and url_course:
         else:
             st.success("Données récupérées avec succès !")
             
-            # Affichage des données brutes récoltées pour transparence
             st.subheader("📊 Données brutes de la course")
             st.write(f"**Conditions de course détectées :** {donnees['conditions']}")
             
             df = pd.DataFrame(donnees['partants'])
             st.dataframe(df)
             
-            # Préparation du prompt pour ChatGPT
             prompt_analyse = f"""
             Tu es le meilleur expert mondial en pronostics hippiques (PMU). Ton objectif est de sortir un pronostic théorique 5/5 (Quinté) hautement optimisé en te basant sur les données brutes suivantes issues de Geny Courses.
             
@@ -93,17 +92,16 @@ if st.button("🚀 Analyser la course") and url_course:
             - ** Indice de confiance ** : Note sur 10.
             """
             
-            with st.spinner("ChatGPT analyse le tableau et prépare votre 5/5..."):
+            with st.spinner("L'IA gratuite analyse le tableau et prépare votre 5/5..."):
                 try:
-                    client = openai.OpenAI(api_key=api_key)
-                    response = client.chat.completions.create(
-                        model="gpt-4o",
-                        messages=[{"role": "user", "content": prompt_analyse}],
-                        temperature=0.3
+                    client = genai.Client(api_key=api_key)
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=prompt_analyse,
                     )
                     
                     st.subheader("🔮 Analyse de l'IA & Sélection 5/5")
-                    st.markdown(response.choices.message.content)
+                    st.markdown(response.text)
                     
                 except Exception as e:
-                    st.error(f"Erreur avec l'API OpenAI : {str(e)}")
+                    st.error(f"Erreur avec l'API Google Gemini : {str(e)}")
